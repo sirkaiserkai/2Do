@@ -215,7 +215,28 @@ func TestModifyObjectForId(t *testing.T) {
 	if err == nil {
 		t.Error("Did not return NotValidObjIndexError")
 	}
+}
 
+func TestDeleteObjectForId(t *testing.T) {
+	// Test setup
+	d := NewDataStore()
+	d.Collection = "2Do_TestGetObjectById_Collection"
+	d.getSetup()
+
+	defer teardown(d)
+
+	// Main test content
+	id := ts0.Id.Hex()
+	err := d.DeleteObjectForId(id)
+	if err != nil {
+		t.Error(err)
+	}
+
+	id = "abc"
+	err = d.DeleteObjectForId(id)
+	if err != NotValidObjIndexError {
+		t.Error(err)
+	}
 }
 
 // END OF TEST FUNCTIONS //

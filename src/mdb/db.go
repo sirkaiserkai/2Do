@@ -48,7 +48,7 @@ func (d *DataStore) GetAllObjects() ([]bson.Raw, error) {
 
 func (d *DataStore) GetObjectById(id string) (*bson.Raw, error) {
 	if !bson.IsObjectIdHex(id) {
-		return nil, errors.New("id: " + id + "Is not a valid ObjectIdHex!")
+		return nil, NotValidObjIndexError
 	}
 
 	var raw bson.Raw
@@ -80,4 +80,14 @@ func (d *DataStore) ModifyObjectForId(id string, change map[string]interface{}) 
 	}
 
 	return nil
+}
+
+func (d *DataStore) DeleteObjectForId(id string) error {
+	if !bson.IsObjectIdHex(id) {
+		return NotValidObjIndexError
+	}
+
+	oid := bson.ObjectIdHex(id)
+
+	return d.session.DB(d.Database).C(d.Collection).RemoveId(oid)
 }

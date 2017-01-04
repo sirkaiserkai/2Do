@@ -78,6 +78,10 @@ func (tds TodoDataStore) InsertTodo(t Todo) error {
 	return tds.d.InsertObject(t)
 }
 
-func ModifyTodo(id string, mTodo Todo) error {
-	return nil
+func (tds TodoDataStore) ModifyTodo(id string, change map[string]interface{}) error {
+	return tds.d.ModifyObjectForId(id, change)
+}
+
+func (tds TodoDataStore) DeleteTodo(id string) error {
+	return tds.d.DeleteObjectForId(id)
 }
