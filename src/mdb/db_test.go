@@ -12,10 +12,10 @@ import (
 const testDB = "2DoDB"
 
 var (
-	ts0         rm = TestStruct{Id: bson.NewObjectId(), Val0: "Word to your mother"}
-	ts1            = TestStruct{Id: bson.NewObjectId(), Val0: "Hello, world!", Val1: 1234}
-	ts2            = TestStruct{Id: bson.NewObjectId(), Val0: "Testing Forever", Val1: 9876}
-	testStructs    = []TestStruct{ts0, ts1, ts2}
+	ts0         = TestStruct{Id: bson.NewObjectId(), Val0: "Word to your mother"}
+	ts1         = TestStruct{Id: bson.NewObjectId(), Val0: "Hello, world!", Val1: 1234}
+	ts2         = TestStruct{Id: bson.NewObjectId(), Val0: "Testing Forever", Val1: 9876}
+	testStructs = []TestStruct{ts0, ts1, ts2}
 )
 
 // SETUP AND TEARDOWN METHODS //
@@ -210,6 +210,12 @@ func TestModifyObjectForId(t *testing.T) {
 		t.Error("Val0 != \"Updated Value\"")
 		t.Log("Val0: " + tstStrct.Val0)
 	}
+
+	err = d.ModifyObjectForId("123", change)
+	if err == nil {
+		t.Error("Did not return NotValidObjIndexError")
+	}
+
 }
 
 // END OF TEST FUNCTIONS //
