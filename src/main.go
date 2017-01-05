@@ -4,22 +4,33 @@ import (
 	"github.com/gorilla/mux"
 	"handlers"
 	"log"
+	"logger"
 	"net/http"
 	"time"
 )
 
 func init() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.SetFlags(log.LstdFlags | log.Lshortfile) // Loggers print the execution line
 }
+
+const (
+	homeRoute  = "/"
+	todosRoute = "/todos"
+	todoRoute  = "/todos/{id}"
+)
 
 func main() {
 
 	r := mux.NewRouter()
 	api := r.PathPrefix("/api").Subrouter()
 
-	api.HandleFunc("/", handlers.HomeHandler)
-	api.HandleFunc("/todos", handlers.TodosHandler).Methods("GET", "POST")
-	api.HandleFunc("/todos/{id}", handlers.TodoHandler).Methods("GET", "PUT", "DELETE")
+	homeHandler := logger.Logger(handlers.HomeHandler, homeRoute)
+	todosHandler := logger.Logger(handlers.TodosHandler, todosRoute)
+	todoHandler := logger.Logger(handlers.TodosHandler, todoRoute)
+
+	api.HandleFunc(homeRoute, homeHandler).Methods("GET")
+	api.HandleFunc(todosRoute, todosHandler).Methods("GET", "POST")
+	api.HandleFunc(todoRoute, todoHandler).Methods("GET", "PUT", "DELETE")
 
 	srv := &http.Server{
 		Handler:      r,

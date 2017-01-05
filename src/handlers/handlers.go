@@ -134,7 +134,6 @@ func TodoPutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func TodoDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO (Ha!): Implement this
 	vars := mux.Vars(r)
 	id := vars["id"]
 

@@ -44,6 +44,7 @@ func (d DataStore) getSetup() {
 // teardown deletes the collection of the datastore
 func teardown(d DataStore) {
 	// Deletes the collection
+	defer d.session.Close()
 	err := d.session.DB(d.Database).C(d.Collection).DropCollection()
 	if err != nil {
 		log.Fatal("Error in teardown: %s", err.Error())

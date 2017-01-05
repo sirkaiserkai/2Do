@@ -12,7 +12,7 @@ const TodoCollection = "todos"
 var TodoConvertError = errors.New("Failed to convert to Todo type")
 
 type Todo struct {
-	Id bson.ObjectId `json:"id" bson:"_id,omitempty"`
+	Id bson.ObjectId `json:"id" bson:"_id,omitempty"` // MongoDBId
 	// TODO: Add id which would be exposed and hide the mongodb id
 	// see http://stackoverflow.com/a/13740114/2812587 for more info
 	Title   string `json:"title" bson:"title"`
