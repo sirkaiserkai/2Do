@@ -14,9 +14,15 @@ func init() {
 }
 
 const (
-	homeRoute  = "/"
+	homeRoute = "/"
+
+	loginRoute  = "/login"
+	signUpRoute = "/signup"
+
 	todosRoute = "/todos"
 	todoRoute  = "/todos/{id}"
+
+	usrAccntRoute = "/account"
 )
 
 func main() {
