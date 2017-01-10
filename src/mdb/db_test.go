@@ -235,7 +235,7 @@ func TestDeleteObjectForId(t *testing.T) {
 
 	id = "abc"
 	err = d.DeleteObjectForId(id)
-	if err != NotValidObjIndexError {
+	if err == nil {
 		t.Error(err)
 	}
 }

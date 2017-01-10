@@ -10,7 +10,7 @@ import (
 // Logger is a handler function for http requests
 // it records the request's method, the URI, and
 // the total time required to execute the request.
-func Logger(inner func(http.ResponseWriter, *http.Request), name string) func(http.ResponseWriter, *http.Request) {
+func Logger(inner func(http.ResponseWriter, *http.Request), routeName string) func(http.ResponseWriter, *http.Request) {
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -20,7 +20,7 @@ func Logger(inner func(http.ResponseWriter, *http.Request), name string) func(ht
 		log.Printf("%s\t%s\t%s\t%s",
 			r.Method,
 			r.RequestURI,
-			name,
+			routeName,
 			time.Since(start),
 		)
 	}

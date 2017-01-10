@@ -1,6 +1,7 @@
 package main
 
 import (
+	"auth"
 	"github.com/gorilla/mux"
 	"handlers"
 	"log"
@@ -30,13 +31,19 @@ func main() {
 	r := mux.NewRouter()
 	api := r.PathPrefix("/api").Subrouter()
 
-	homeHandler := logger.Logger(handlers.HomeHandler, homeRoute)
-	todosHandler := logger.Logger(handlers.TodosHandler, todosRoute)
-	todoHandler := logger.Logger(handlers.TodosHandler, todoRoute)
+	homeHandler := logger.Logger(auth.ValidatePath(handlers.HomeHandler), homeRoute)
+	todosHandler := logger.Logger(auth.ValidatePath(handlers.TodosHandler), todosRoute)
+	todoHandler := logger.Logger(auth.ValidatePath(handlers.TodosHandler), todoRoute)
+
+	signUpHandler := logger.Logger(handlers.SignUpHandler, signUpRoute)
+	logInHandler := logger.Logger(handlers.LogInHandler, loginRoute)
 
 	api.HandleFunc(homeRoute, homeHandler).Methods("GET")
 	api.HandleFunc(todosRoute, todosHandler).Methods("GET", "POST")
 	api.HandleFunc(todoRoute, todoHandler).Methods("GET", "PUT", "DELETE")
+
+	api.HandleFunc(signUpRoute, signUpHandler).Methods("POST")
+	api.HandleFunc(loginRoute, logInHandler).Methods("POST")
 
 	srv := &http.Server{
 		Handler:      r,

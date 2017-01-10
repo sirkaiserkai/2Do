@@ -4,6 +4,7 @@ import (
 	"errors"
 	"gopkg.in/mgo.v2/bson"
 	"mdb"
+	"time"
 	//"log"
 )
 
@@ -15,9 +16,11 @@ type Todo struct {
 	Id bson.ObjectId `json:"id" bson:"_id,omitempty"` // MongoDBId
 	// TODO: Add id which would be exposed and hide the mongodb id
 	// see http://stackoverflow.com/a/13740114/2812587 for more info
-	Title   string `json:"title" bson:"title"`
-	Note    string `json:"note" bson:"note"`
-	Ownerid string `json:"-" bson:"ownerid"`
+	Title   string    `json:"title" bson:"title"`
+	Note    string    `json:"note" bson:"note"`
+	Created time.Time `json:"created_date" bson:"created_date"`
+	Due     time.Time `json:"due_date" bson:"due_date"`
+	Ownerid string    `json:"-" bson:"ownerid"`
 }
 
 func NewTodo() Todo {
@@ -37,7 +40,7 @@ func NewTodoDataStore() TodoDataStore {
 	return tds
 }
 
-func (tds TodoDataStore) GetAllTodos() (*[]Todo, error) {
+func (tds TodoDataStore) GetAllTodos() ([]Todo, error) {
 
 	ts := make([]Todo, 0)
 
@@ -55,7 +58,7 @@ func (tds TodoDataStore) GetAllTodos() (*[]Todo, error) {
 		ts = append(ts, t)
 	}
 
-	return &ts, nil
+	return ts, nil
 }
 
 func (tds TodoDataStore) GetTodoById(id string) (*Todo, error) {
@@ -72,6 +75,27 @@ func (tds TodoDataStore) GetTodoById(id string) (*Todo, error) {
 	}
 
 	return &t, nil
+}
+
+func (tds TodoDataStore) GetTodosForUserId(id string) ([]Todo, error) {
+	ts := make([]Todo, 0)
+	query := bson.M{"ownerid": id}
+
+	raws, err := tds.d.GetObjectsForQuery(query)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, raw := range raws {
+		t := Todo{}
+		err := raw.Unmarshal(&t)
+		if err != nil {
+			return nil, err
+		}
+		ts = append(ts, t)
+	}
+
+	return ts, nil
 }
 
 func (tds TodoDataStore) InsertTodo(t Todo) error {
