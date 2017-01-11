@@ -39,19 +39,6 @@ func NewUserDataStore() UserDataStore {
 }
 
 func (uds *UserDataStore) GetUserById(id string) (*User, error) {
-	/*u := User{}
-
-	raw, err := uds.d.GetObjectById(id)
-	if err != nil {
-		return nil, err
-	}
-
-	err = raw.Unmarshal(&u)
-	if err != nil {
-		return nil, err
-	}
-
-	return &u, nil*/
 	return getUser(id, uds.d.GetObjectById)
 }
 
@@ -83,9 +70,13 @@ func (uds *UserDataStore) InsertUser(u User) error {
 }
 
 func (uds *UserDataStore) ModifyUser(id string, change map[string]interface{}) error {
-	return uds.d.ModifyObjectForId(id, change)
+	params := make(map[string]string)
+	params["id"] = id
+	return uds.d.ModifyObjectForId(params, change)
 }
 
-func (uds *UserDataStore) DeleteUser(id string, change map[string]interface{}) error {
-	return uds.d.DeleteObjectForId(id)
+func (uds *UserDataStore) DeleteUser(id string) error {
+	params := make(map[string]string)
+	params["id"] = id
+	return uds.d.DeleteObjectForSelector(params)
 }

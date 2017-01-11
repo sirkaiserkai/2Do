@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile) // Loggers print the execution line
+	log.SetFlags(log.LstdFlags | log.Lshortfile) // Loggers print the execution line. SUPER clutch everyone should use this for debugging
 }
 
 const (
@@ -33,7 +33,7 @@ func main() {
 
 	homeHandler := logger.Logger(auth.ValidatePath(handlers.HomeHandler), homeRoute)
 	todosHandler := logger.Logger(auth.ValidatePath(handlers.TodosHandler), todosRoute)
-	todoHandler := logger.Logger(auth.ValidatePath(handlers.TodosHandler), todoRoute)
+	todoHandler := logger.Logger(auth.ValidatePath(handlers.TodoGetHandler), todoRoute)
 
 	signUpHandler := logger.Logger(handlers.SignUpHandler, signUpRoute)
 	logInHandler := logger.Logger(handlers.LogInHandler, loginRoute)

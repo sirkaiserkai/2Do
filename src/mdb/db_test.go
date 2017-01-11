@@ -191,7 +191,10 @@ func TestModifyObjectForId(t *testing.T) {
 	// Main test content
 	id := ts0.Id.Hex()
 	change := bson.M{"value0": "Updated Value"}
-	err := d.ModifyObjectForId(id, change)
+
+	m := make(map[string]string)
+	m["id"] = id
+	err := d.ModifyObjectForId(m, change)
 	if err != nil {
 		t.Error(err)
 	}
@@ -212,7 +215,8 @@ func TestModifyObjectForId(t *testing.T) {
 		t.Log("Val0: " + tstStrct.Val0)
 	}
 
-	err = d.ModifyObjectForId("123", change)
+	m["id"] = "123"
+	err = d.ModifyObjectForId(m, change)
 	if err == nil {
 		t.Error("Did not return NotValidObjIndexError")
 	}
@@ -227,14 +231,17 @@ func TestDeleteObjectForId(t *testing.T) {
 	defer teardown(d)
 
 	// Main test content
+	m := make(map[string]string)
 	id := ts0.Id.Hex()
-	err := d.DeleteObjectForId(id)
+	m["id"] = id
+	err := d.DeleteObjectForSelector(m)
 	if err != nil {
 		t.Error(err)
 	}
 
 	id = "abc"
-	err = d.DeleteObjectForId(id)
+	m["id"] = id
+	err = d.DeleteObjectForSelector(m)
 	if err == nil {
 		t.Error(err)
 	}

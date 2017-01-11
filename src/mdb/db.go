@@ -12,8 +12,14 @@ const hostname = "mongodb://localhost"
 const databaseName = "2DoDB"
 
 var masterSession *mgo.Session
-var NotValidObjIndexError = "Id is not a valid ObjectIdHex: %s"
+
 var NotFoundError = mgo.ErrNotFound
+
+type NotValidObjIndexError error
+
+func notValidObjIndexError(id string) NotValidObjIndexError {
+	return fmt.Errorf("Id is not a valid ObjectIdHex: %s", id)
+}
 
 func init() {
 	var err error
@@ -55,7 +61,7 @@ func (d *DataStore) GetObjectById(i interface{}) (*bson.Raw, error) {
 	}
 
 	if !bson.IsObjectIdHex(id) {
-		return nil, fmt.Errorf(NotValidObjIndexError, id)
+		return nil, notValidObjIndexError(id)
 	}
 
 	var raw bson.Raw
@@ -91,7 +97,7 @@ func (d *DataStore) GetObjectsForQuery(query interface{}) ([]bson.Raw, error) {
 	}
 
 	var results []bson.Raw
-	err := d.session.DB(d.Database).C(d.Collection).Find(q).One(&results)
+	err := d.session.DB(d.Database).C(d.Collection).Find(q).All(&results)
 	if err != nil {
 		return nil, err
 	}
@@ -103,13 +109,22 @@ func (d *DataStore) InsertObject(obj interface{}) error {
 	return d.session.DB(d.Database).C(d.Collection).Insert(obj)
 }
 
-func (d *DataStore) ModifyObjectForId(id string, change map[string]interface{}) error {
-	if !bson.IsObjectIdHex(id) {
-		return fmt.Errorf(NotValidObjIndexError, id)
-	}
-	oid := bson.ObjectIdHex(id)
+func (d *DataStore) ModifyObjectForId(params map[string]string, change map[string]interface{}) error {
 
-	selector := bson.M{"_id": oid}
+	selector := bson.M{}
+	for k, v := range params {
+		if k == "id" {
+			id := params["id"]
+			if !bson.IsObjectIdHex(id) {
+				return notValidObjIndexError(id)
+			}
+			oid := bson.ObjectIdHex(id)
+			selector["_id"] = oid
+		} else {
+			selector[k] = v
+		}
+	}
+
 	err := d.session.DB(d.Database).C(d.Collection).Update(selector, change)
 	if err != nil {
 		log.Println("ModifyObjectForId: " + err.Error())
@@ -119,12 +134,21 @@ func (d *DataStore) ModifyObjectForId(id string, change map[string]interface{}) 
 	return nil
 }
 
-func (d *DataStore) DeleteObjectForId(id string) error {
-	if !bson.IsObjectIdHex(id) {
-		return fmt.Errorf(NotValidObjIndexError, id)
+func (d *DataStore) DeleteObjectForSelector(params map[string]string) error {
+
+	selector := bson.M{}
+	for k, v := range params {
+		if k == "id" {
+			id := params["id"]
+			if !bson.IsObjectIdHex(id) {
+				return notValidObjIndexError(id)
+			}
+			oid := bson.ObjectIdHex(id)
+			selector["_id"] = oid
+		} else {
+			selector[k] = v
+		}
 	}
 
-	oid := bson.ObjectIdHex(id)
-
-	return d.session.DB(d.Database).C(d.Collection).RemoveId(oid)
+	return d.session.DB(d.Database).C(d.Collection).Remove(selector)
 }

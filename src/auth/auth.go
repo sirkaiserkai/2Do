@@ -38,7 +38,7 @@ func CreateToken(u models.User) (string, error) {
 
 	signedToken, err := token.SignedString([]byte(secret))
 	if err != nil {
-		panic(err)
+		panic(err) // TODO: Handle error more eloquently
 	}
 
 	return signedToken, nil
@@ -117,7 +117,7 @@ func keyFunc(token *jwt.Token) (interface{}, error) {
 func HashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return "", err // TODO: Handle more eloquently
+		return "", err
 	}
 
 	return string(hashedPassword), nil

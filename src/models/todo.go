@@ -5,7 +5,6 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"mdb"
 	"time"
-	//"log"
 )
 
 const TodoCollection = "todos"
@@ -16,11 +15,12 @@ type Todo struct {
 	Id bson.ObjectId `json:"id" bson:"_id,omitempty"` // MongoDBId
 	// TODO: Add id which would be exposed and hide the mongodb id
 	// see http://stackoverflow.com/a/13740114/2812587 for more info
-	Title   string    `json:"title" bson:"title"`
-	Note    string    `json:"note" bson:"note"`
-	Created time.Time `json:"created_date" bson:"created_date"`
-	Due     time.Time `json:"due_date" bson:"due_date"`
-	Ownerid string    `json:"-" bson:"ownerid"`
+	Title     string    `json:"title" bson:"title"`
+	Note      string    `json:"note" bson:"note"`
+	Created   time.Time `json:"created_date" bson:"created_date"`
+	Due       time.Time `json:"due_date" bson:"due_date"`
+	Ownerid   string    `json:"-" bson:"ownerid"`
+	Completed bool      `json:"completed" bson:"completed"`
 }
 
 func NewTodo() Todo {
@@ -102,10 +102,17 @@ func (tds TodoDataStore) InsertTodo(t Todo) error {
 	return tds.d.InsertObject(t)
 }
 
-func (tds TodoDataStore) ModifyTodo(id string, change map[string]interface{}) error {
-	return tds.d.ModifyObjectForId(id, change)
+func (tds TodoDataStore) ModifyTodo(todoId, userId string, changes map[string]interface{}) error {
+	params := make(map[string]string)
+	params["id"] = todoId
+	params["ownerid"] = userId
+	return tds.d.ModifyObjectForId(params, changes)
 }
 
-func (tds TodoDataStore) DeleteTodo(id string) error {
-	return tds.d.DeleteObjectForId(id)
+func (tds TodoDataStore) DeleteTodo(id, userId string) error {
+	m := make(map[string]string)
+	m["id"] = id
+	m["ownerid"] = userId
+
+	return tds.d.DeleteObjectForSelector(m)
 }

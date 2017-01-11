@@ -3,6 +3,7 @@ package handlers
 import (
 	"auth"
 	"encoding/json"
+	"fmt"
 	"log"
 	"models"
 	"net/http"
@@ -28,19 +29,17 @@ func LogInHandler(w http.ResponseWriter, r *http.Request) {
 
 	u, err := uds.GetUserByName(username)
 	if err != nil {
+		BadRequestHandler(w, r, "Failure to log in")
 		log.Println("Failure to Log In: %s\n", err)
-		w.WriteHeader(400)
-		w.Write([]byte("Failure to Log in"))
 		return
 	}
 
 	if !auth.PasswordEquality(u.Password, password) {
+		BadRequestHandler(w, r, "Failure to log in")
 		log.Println("Failure to Log In: Passwords not equal")
-		w.WriteHeader(400)
-		w.Write([]byte("Failure to Log in"))
 		return
 	}
-	log.Println(u)
+
 	token, err := auth.CreateToken(*u)
 	if err != nil {
 		panic(err)
@@ -48,7 +47,7 @@ func LogInHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(200)
 	w.Write([]byte(
-		"{'message': 'Successfully logged into 2Do'," +
+		"{'result': 'Successfully logged into 2Do'," +
 			" 'token': '" + token + "'}"))
 }
 
@@ -82,8 +81,8 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isPasswordLegit(password) {
-		w.WriteHeader(400)
-		w.Write([]byte("Password must be above 6 characters in legnth"))
+		BadRequestHandler(w, r, "Password must be above 6 characters in length")
+		return
 	}
 
 	uds := models.NewUserDataStore()
@@ -92,16 +91,14 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err != models.ErrUserNotFound {
 			log.Printf("SignUpHandler: GetUserByName: Failure to get user: %s\n", err)
-			w.WriteHeader(400)
-			w.Write([]byte("Error: Failure to sign up"))
+			InternalErrorHandler(w, r, "Failure to sign up: Internal Error")
 			return
 		}
 	}
 
 	if sameUsernameUser != nil {
-		log.Printf("SignUpHandler: User with username already exists\n")
-		w.WriteHeader(400)
-		w.Write([]byte("Failure to sign up: User with username already exists"))
+		log.Printf("SignUpHandler: User with user already exists for username: %s\n", err.Error())
+		BadRequestHandler(w, r, "User already exists with username")
 		return
 	}
 
@@ -115,11 +112,19 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	err = uds.InsertUser(u)
 	if err != nil {
 		log.Printf("SignUpHadler: InsertUser Error: %s\n", err)
-		w.WriteHeader(400)
-		w.Write([]byte("Error: Failure to sign up"))
+		InternalErrorHandler(w, r, "Failure to sign up: Internal Error")
 	}
 
 	log.Printf("User successfully created: %v\n", u)
-	w.WriteHeader(200)
-	w.Write([]byte("Successfully signed up for 2Do service!"))
+	res := jsonResponse{result: fmt.Sprintf("%s successfully signed up for 2Do service!", u.Username)}
+
+	v, err := json.Marshal(res)
+	if err != nil {
+		log.Println(fmt.Sprintf("Failure to sign up user (%s): %s", u.Username, err))
+		InternalErrorHandler(w, r, "Failure to sign up: Internal Error")
+		return
+	}
+
+	w.WriteHeader(201)
+	w.Write(v)
 }
