@@ -7,33 +7,49 @@ import (
 	"net/http"
 )
 
+const (
+	ContentType     = "Content-Type"
+	ApplicationJSON = "application/json"
+)
+
+const (
+	StatusSuccess       = 200
+	StatusCreation      = 201
+	StatusBadRequest    = 400
+	StatusUnauthorized  = 401
+	StatusNotFound      = 404
+	StatusInternalError = 500
+)
+
 // GENERIC REQUEST HANDLERS //
 func NotFoundHandler(w http.ResponseWriter, r *http.Request, errMsg string) {
-	w.WriteHeader(404)
-	w.Header().Set("Content-Type", "application/json")
-	v := jsonResponse{errorMessage: errMsg}
+	//return func(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(StatusNotFound)
+	w.Header().Set(ContentType, ApplicationJSON)
+	v := jsonResponse{ErrorMessage: errMsg}
 
 	msg, err := json.Marshal(v)
 	if err != nil || errMsg == "" {
-		w.Write([]byte("{ \"error_message\"; \"Failure to retrieve objects\"}"))
-		if errMsg != "" {
+		w.Write([]byte("{ \"error_message\": \"Failure to retrieve objects\"}"))
+		if err != nil {
 			log.Println(fmt.Sprintf("Failure to marshal jsonResponse: %v", err))
 		}
 		return
 	}
 
 	w.Write(msg)
+	//}
 }
 
 func InternalErrorHandler(w http.ResponseWriter, r *http.Request, errMsg string) {
-	w.WriteHeader(500)
-	w.Header().Set("Content-Type", "application/json")
-	v := jsonResponse{errorMessage: errMsg}
+	w.WriteHeader(StatusInternalError)
+	w.Header().Set(ContentType, ApplicationJSON)
+	v := jsonResponse{ErrorMessage: errMsg}
 
 	msg, err := json.Marshal(v)
 	if err != nil || errMsg == "" {
-		w.Write([]byte("{ \"error_message\"; \"The server encountered an unexpected condition which prevented it from fulfilling the request.\"}"))
-		if errMsg != "" {
+		w.Write([]byte("{ \"error_message\": \"The server encountered an unexpected condition which prevented it from fulfilling the request.\"}"))
+		if err != nil {
 			log.Println(fmt.Sprintf("Failure to marshal jsonResponse: %v", err))
 		}
 		return
@@ -43,15 +59,15 @@ func InternalErrorHandler(w http.ResponseWriter, r *http.Request, errMsg string)
 }
 
 func UnauthorizedHandler(w http.ResponseWriter, r *http.Request, errMsg string) {
-	w.WriteHeader(401)
+	w.WriteHeader(StatusUnauthorized)
 	w.Header().Set("WWW-Authenticate", "Bearer")
-	w.Header().Set("Content-Type", "application/json")
-	v := jsonResponse{errorMessage: errMsg}
+	w.Header().Set(ContentType, ApplicationJSON)
+	v := jsonResponse{ErrorMessage: errMsg}
 
 	msg, err := json.Marshal(v)
 	if err != nil || errMsg == "" {
-		w.Write([]byte("{ \"error_message\"; \"The request requires user authentication.\"}"))
-		if errMsg != "" {
+		w.Write([]byte("{ \"error_message\": \"The request requires user authentication.\"}"))
+		if err != nil {
 			log.Println(fmt.Sprintf("Failure to marshal jsonResponse: %v", err))
 		}
 		return
@@ -61,14 +77,14 @@ func UnauthorizedHandler(w http.ResponseWriter, r *http.Request, errMsg string) 
 }
 
 func BadRequestHandler(w http.ResponseWriter, r *http.Request, errMsg string) {
-	w.WriteHeader(400)
-	w.Header().Set("Content-Type", "application/json")
-	v := jsonResponse{errorMessage: errMsg}
+	w.WriteHeader(StatusBadRequest)
+	w.Header().Set(ContentType, ApplicationJSON)
+	v := jsonResponse{ErrorMessage: errMsg}
 
 	msg, err := json.Marshal(v)
 	if err != nil || errMsg == "" {
-		w.Write([]byte("{ \"error_message\"; \"Bad Request.\"}"))
-		if errMsg != "" {
+		w.Write([]byte("{ \"error_message\": \"Bad Request.\"}"))
+		if err != nil {
 			log.Println(fmt.Sprintf("Failure to marshal jsonResponse: %v", err))
 		}
 		return

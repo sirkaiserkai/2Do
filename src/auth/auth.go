@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
@@ -14,7 +13,7 @@ import (
 
 var secret = "secret"
 
-const claimsKey = 0
+const ClaimsKey = 0
 
 type Claims struct {
 	UserId string `json:"userId"`
@@ -60,53 +59,10 @@ func GetTokenFromAuthHeader(r *http.Request) (string, error) {
 	return authHeaderParts[1], nil
 }
 
-func ValidatePath(page http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tokenString, err := GetTokenFromAuthHeader(r)
-		if err != nil {
-			forbidden := ForbiddenReqHandler(err.Error())
-			forbidden(w, r)
-			return
-		}
-
-		var c Claims
-		token, err := jwt.ParseWithClaims(tokenString, &c, keyFunc)
-		if err != nil {
-			log.Printf("ValidateToken: ParseWithCalims failure: %s\n", err.Error())
-			http.NotFound(w, r)
-			return
-		}
-
-		// Check if user with id exists
-		id := c.UserId
-
-		uds := models.NewUserDataStore()
-		user, err := uds.GetUserById(id)
-		if err != nil {
-			log.Printf("ValidateToken: GetUserById Failed: %s\n", err.Error())
-			http.NotFound(w, r)
-			return
-		}
-
-		if user.Blocked {
-			log.Printf("ValidateToken: Blocked user attempted access: %v\n", user)
-			UnauthorizedReqHandler(w, r)
-			return
-		}
-
-		if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-			ctx := context.WithValue(r.Context(), claimsKey, *claims)
-			page(w, r.WithContext(ctx))
-		} else {
-			http.NotFound(w, r)
-		}
-	})
-}
-
 // keyFunc is the callback method used by the jwt parser to provide the
 // correct key to parse unverified tokens.
 // (See: https://godoc.org/github.com/dgrijalva/jwt-go#Keyfunc )
-func keyFunc(token *jwt.Token) (interface{}, error) {
+func KeyFunc(token *jwt.Token) (interface{}, error) {
 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 		return nil, fmt.Errorf("Unexpected Signing method")
 	}
@@ -133,23 +89,26 @@ func PasswordEquality(hashedPassword, password string) bool {
 	return true
 }
 
+/*
 func ForbiddenReqHandler(message string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		w.Write([]byte(fmt.Sprintf("Forbidden Request: %s", message)))
 		return
 	}
-}
+}*/
 
+/*
 func UnauthorizedReqHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(401)
 	w.Write([]byte("Unauthorized Access"))
-}
+}*/
 
 func GetClaims(r *http.Request) (*Claims, error) {
-	claims, ok := r.Context().Value(claimsKey).(Claims)
+	log.Println(r.Context())
+	claims, ok := r.Context().Value(ClaimsKey).(Claims)
 	if !ok {
-		err := fmt.Errorf("Failed to retrieve Claim")
+		err := fmt.Errorf("Failed to retrieve Claims")
 		log.Printf("GetClaims: %s\n", err.Error())
 		return nil, err
 	}

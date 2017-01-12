@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"auth"
+	"context"
 	"encoding/json"
+	"github.com/dgrijalva/jwt-go"
+
 	"fmt"
 	"log"
 	"models"
@@ -45,7 +48,8 @@ func LogInHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	w.WriteHeader(200)
+	w.WriteHeader(StatusSuccess)
+	w.Header().Set(ContentType, ApplicationJSON)
 	w.Write([]byte(
 		"{'result': 'Successfully logged into 2Do'," +
 			" 'token': '" + token + "'}"))
@@ -116,7 +120,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("User successfully created: %v\n", u)
-	res := jsonResponse{result: fmt.Sprintf("%s successfully signed up for 2Do service!", u.Username)}
+	res := jsonResponse{Result: fmt.Sprintf("%s successfully signed up for 2Do service!", u.Username)}
 
 	v, err := json.Marshal(res)
 	if err != nil {
@@ -125,6 +129,50 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(201)
+	w.WriteHeader(StatusCreation)
+	w.Header().Set(ContentType, ApplicationJSON)
 	w.Write(v)
+}
+
+func ValidatePath(page http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenString, err := auth.GetTokenFromAuthHeader(r)
+		if err != nil {
+			BadRequestHandler(w, r, err.Error())
+			return
+		}
+
+		var c auth.Claims
+		token, err := jwt.ParseWithClaims(tokenString, &c, auth.KeyFunc)
+		if err != nil {
+			log.Printf("ValidateToken: ParseWithCalims failure: %s\n", err.Error())
+			NotFoundHandler(w, r, "")
+			return
+		}
+
+		// Check if user with id exists
+		id := c.UserId
+
+		uds := models.NewUserDataStore()
+		log.Println(uds.GetDB())
+		user, err := uds.GetUserById(id)
+		if err != nil {
+			log.Printf("ValidateToken: GetUserById Failed for: %v reason: %v", id, err.Error())
+			NotFoundHandler(w, r, "")
+			return
+		}
+
+		if user.Blocked {
+			log.Printf("ValidateToken: Blocked user attempted access: %v\n", user)
+			UnauthorizedHandler(w, r, "")
+			return
+		}
+
+		if claims, ok := token.Claims.(*auth.Claims); ok && token.Valid {
+			ctx := context.WithValue(r.Context(), auth.ClaimsKey, *claims)
+			page(w, r.WithContext(ctx))
+		} else {
+			NotFoundHandler(w, r, "")
+		}
+	})
 }

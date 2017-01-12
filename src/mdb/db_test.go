@@ -128,7 +128,7 @@ func TestInsertObject(t *testing.T) {
 }
 
 func TestGetObjects(t *testing.T) {
-	// Test Setup
+	// Test setup
 	d := NewDataStore()
 	d.Collection = "2Do_TestGetObjects_Collection"
 	d.getSetup()

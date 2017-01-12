@@ -12,12 +12,13 @@ import (
 
 // jsonResponse is the struct for almost all responses
 type jsonResponse struct {
-	result       string      `json:"result,omitempty"`
-	errorMessage string      `json:"error_message,omitempty"`
-	data         interface{} `json:"data,omitempty"`
+	Result       string      `json:"result,omitempty"`
+	ErrorMessage string      `json:"error_message,omitempty"`
+	Data         interface{} `json:"data,omitempty"`
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(StatusSuccess)
 	w.Write([]byte("Nothing to see here move along"))
 }
 
@@ -49,8 +50,10 @@ func TodoHandler(w http.ResponseWriter, r *http.Request) {
 // respective todos for a user.
 func TodosGetHandler(w http.ResponseWriter, r *http.Request) {
 	claims, err := auth.GetClaims(r)
+
 	if err != nil {
 		UnauthorizedHandler(w, r, "")
+		log.Println(err)
 		return
 	}
 
@@ -70,6 +73,8 @@ func TodosGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.WriteHeader(StatusSuccess)
+	w.Header().Set(ContentType, ApplicationJSON)
 	w.Write(data)
 }
 
@@ -102,8 +107,8 @@ func TodosPostHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("2Do: " + t.Id.String() + " created")
 
 	res := jsonResponse{
-		result: fmt.Sprintf("Successfully created 2Do: %s", t.Id.String()),
-		data:   t,
+		Result: fmt.Sprintf("Successfully created 2Do: %s", t.Id.String()),
+		Data:   t,
 	}
 
 	msg, err := json.Marshal(res)
@@ -113,7 +118,8 @@ func TodosPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(201)
+	w.WriteHeader(StatusCreation)
+	w.Header().Set(ContentType, ApplicationJSON)
 	w.Write(msg)
 }
 
@@ -152,6 +158,8 @@ func TodoGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.WriteHeader(StatusSuccess)
+	w.Header().Set(ContentType, ApplicationJSON)
 	w.Write(data)
 }
 
@@ -183,7 +191,7 @@ func TodoPutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := jsonResponse{result: fmt.Sprintf("Successfully modified 2Do: %s", id)}
+	res := jsonResponse{Result: fmt.Sprintf("Successfully modified 2Do: %s", id)}
 	msg, err := json.Marshal(res)
 	if err != nil {
 		InternalErrorHandler(w, r, "Failure to modify 2Do")
@@ -191,7 +199,8 @@ func TodoPutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(200)
+	w.WriteHeader(StatusSuccess)
+	w.Header().Set(ContentType, ApplicationJSON)
 	w.Write(msg)
 }
 
@@ -212,7 +221,7 @@ func TodoDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := jsonResponse{result: fmt.Sprintf("Successfully deleted 2Do: %s", id)}
+	res := jsonResponse{Result: fmt.Sprintf("Successfully deleted 2Do: %s", id)}
 	msg, err := json.Marshal(res)
 	if err != nil {
 		InternalErrorHandler(w, r, "Failure to delete 2Do")
@@ -220,6 +229,7 @@ func TodoDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(200)
+	w.WriteHeader(StatusSuccess)
+	w.Header().Set(ContentType, ApplicationJSON)
 	w.Write(msg)
 }

@@ -38,6 +38,26 @@ func NewUserDataStore() UserDataStore {
 	return uds
 }
 
+func (uds *UserDataStore) SetDB(db string) {
+	uds.d.Database = db
+}
+
+func (uds UserDataStore) GetDB() string {
+	return uds.d.Database
+}
+
+func (uds *UserDataStore) SetCollection(coll string) {
+	uds.d.Collection = coll
+}
+
+func (uds UserDataStore) GetCollection() string {
+	return uds.d.Collection
+}
+
+func (uds UserDataStore) Close() {
+	uds.d.Close()
+}
+
 func (uds *UserDataStore) GetUserById(id string) (*User, error) {
 	return getUser(id, uds.d.GetObjectById)
 }
@@ -65,7 +85,7 @@ func getUser(param interface{}, queryFunc func(interface{}) (*bson.Raw, error)) 
 	return &u, nil
 }
 
-func (uds *UserDataStore) InsertUser(u User) error {
+func (uds UserDataStore) InsertUser(u User) error {
 	return uds.d.InsertObject(u)
 }
 

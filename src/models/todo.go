@@ -17,8 +17,8 @@ type Todo struct {
 	// see http://stackoverflow.com/a/13740114/2812587 for more info
 	Title     string    `json:"title" bson:"title"`
 	Note      string    `json:"note" bson:"note"`
-	Created   time.Time `json:"created_date" bson:"created_date"`
-	Due       time.Time `json:"due_date" bson:"due_date"`
+	Created   time.Time `json:"created_date" bson:"created_date,omitempty"`
+	Due       time.Time `json:"due_date" bson:"due_date,omitempty"`
 	Ownerid   string    `json:"-" bson:"ownerid"`
 	Completed bool      `json:"completed" bson:"completed"`
 }
@@ -38,6 +38,26 @@ func NewTodoDataStore() TodoDataStore {
 	tds.d = mdb.NewDataStore()
 	tds.d.Collection = TodoCollection
 	return tds
+}
+
+func (tds TodoDataStore) Close() {
+	tds.d.Close()
+}
+
+func (tds *TodoDataStore) SetDB(db string) {
+	tds.d.Database = db
+}
+
+func (tds TodoDataStore) GetDB() string {
+	return tds.d.Database
+}
+
+func (tds *TodoDataStore) SetCollection(coll string) {
+	tds.d.Collection = coll
+}
+
+func (tds TodoDataStore) GetCollection() string {
+	return tds.d.Collection
 }
 
 func (tds TodoDataStore) GetAllTodos() ([]Todo, error) {
@@ -102,6 +122,7 @@ func (tds TodoDataStore) InsertTodo(t Todo) error {
 	return tds.d.InsertObject(t)
 }
 
+// TODO: Remove ability to change ownerid field
 func (tds TodoDataStore) ModifyTodo(todoId, userId string, changes map[string]interface{}) error {
 	params := make(map[string]string)
 	params["id"] = todoId

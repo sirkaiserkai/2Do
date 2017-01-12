@@ -8,9 +8,9 @@ import (
 	"log"
 )
 
-const hostname = "mongodb://localhost"
-const databaseName = "2DoDB"
+const Hostname = "mongodb://localhost"
 
+var DatabaseName = "2DoDB"
 var masterSession *mgo.Session
 
 var NotFoundError = mgo.ErrNotFound
@@ -23,7 +23,7 @@ func notValidObjIndexError(id string) NotValidObjIndexError {
 
 func init() {
 	var err error
-	masterSession, err = mgo.Dial(hostname)
+	masterSession, err = mgo.Dial(Hostname)
 	if err != nil {
 		panic(err)
 	}
@@ -38,8 +38,12 @@ type DataStore struct {
 func NewDataStore() DataStore {
 	d := DataStore{}
 	d.session = masterSession.Copy()
-	d.Database = databaseName // Assigned the default database name
+	d.Database = DatabaseName // Assigned the default database name
 	return d
+}
+
+func (d DataStore) Close() {
+	d.session.Close()
 }
 
 func (d *DataStore) GetAllObjects() ([]bson.Raw, error) {
