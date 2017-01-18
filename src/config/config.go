@@ -16,6 +16,8 @@ const configFile = "conf.json"
 
 var config *Configuration // Global configuration instance
 
+// GetConfig returns the global config object or if it
+// does not exist it creates it and returns it.
 func GetConfig() Configuration {
 	if config != nil {
 		return *config
