@@ -17,6 +17,32 @@ type User struct {
 	Blocked  bool          `json:"-" bson:"blocked"`
 }
 
+type UserDataStore struct {
+	d mdb.DataStore
+}
+
+type UserStorage interface {
+	Close()
+	GetUserById(id string) (*User, error)
+	GetUserByName(name string) (*User, error)
+	InsertUser(u User) error
+	ModifyUser(id string, change map[string]interface{}) error
+	DeleteUser(id string) error
+}
+
+func NewUserStorage() UserStorage {
+	switch USER_STORE_TYPE {
+	case Regular:
+		return NewUserDataStore()
+	case Test:
+		return newTestUserStorage()
+	}
+
+	return NewUserDataStore()
+}
+
+// User Struct methods //
+
 func (u User) String() string {
 	return fmt.Sprintf("User: [ '%s', '%s' ]", u.Id.Hex(), u.Username)
 }
@@ -27,22 +53,19 @@ func NewUser() User {
 	return u
 }
 
-type UserDataStore struct {
-	d mdb.DataStore
-}
-
-func NewUserDataStore() UserDataStore {
+// UserDataStore Methods - Implements UserStorage Interface //
+func NewUserDataStore() *UserDataStore {
 	uds := UserDataStore{}
 	uds.d = mdb.NewDataStore()
 	uds.d.Collection = UserCollection
-	return uds
+	return &uds
 }
 
 func (uds *UserDataStore) SetDB(db string) {
 	uds.d.Database = db
 }
 
-func (uds UserDataStore) GetDB() string {
+func (uds *UserDataStore) GetDB() string {
 	return uds.d.Database
 }
 
@@ -50,11 +73,11 @@ func (uds *UserDataStore) SetCollection(coll string) {
 	uds.d.Collection = coll
 }
 
-func (uds UserDataStore) GetCollection() string {
+func (uds *UserDataStore) GetCollection() string {
 	return uds.d.Collection
 }
 
-func (uds UserDataStore) Close() {
+func (uds *UserDataStore) Close() {
 	uds.d.Close()
 }
 
@@ -85,7 +108,7 @@ func getUser(param interface{}, queryFunc func(interface{}) (*bson.Raw, error)) 
 	return &u, nil
 }
 
-func (uds UserDataStore) InsertUser(u User) error {
+func (uds *UserDataStore) InsertUser(u User) error {
 	return uds.d.InsertObject(u)
 }
 

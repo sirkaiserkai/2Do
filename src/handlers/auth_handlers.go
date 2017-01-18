@@ -153,8 +153,8 @@ func ValidatePath(page http.HandlerFunc) http.HandlerFunc {
 		// Check if user with id exists
 		id := c.UserId
 
-		uds := models.NewUserDataStore()
-		log.Println(uds.GetDB())
+		uds := models.NewUserStorage()
+
 		user, err := uds.GetUserById(id)
 		if err != nil {
 			log.Printf("ValidateToken: GetUserById Failed for: %v reason: %v", id, err.Error())

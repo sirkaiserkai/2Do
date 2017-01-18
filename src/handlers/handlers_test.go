@@ -2,43 +2,46 @@ package handlers
 
 import (
 	"auth"
-	"gopkg.in/mgo.v2"
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"log"
-	"mdb"
 	"models"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 const (
 	testDB = "2Do_handlers_test_DB"
 )
 
-// Holy setup function, Batman!
-func handlersSetup(method, route string) (*http.Request, *httptest.ResponseRecorder, models.UserDataStore, models.TodoDataStore, models.User) {
-	mdb.DatabaseName = testDB
+func init() {
+	models.USER_STORE_TYPE = models.Test
+	models.TODO_STORE_TYPE = models.Test
+}
 
-	req, err := http.NewRequest(method, route, nil)
+// Holy setup function, Batman!
+func handlersSetup(method, route, body string) (*http.Request, *httptest.ResponseRecorder) {
+	//models.USER_STORE_TYPE = models.TestDataStoreType
+	buf := bytes.NewBufferString(body)
+	req, err := http.NewRequest(method, route, buf)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	rr := httptest.NewRecorder()
 
-	uds := models.NewUserDataStore()
-	tds := models.NewTodoDataStore()
+	return req, rr
+}
 
-	uds.SetDB(testDB)
-	tds.SetDB(testDB)
+func TestTodosHandler0(t *testing.T) {
+	req, rr := handlersSetup("GET", "api/todos", "")
 
 	u := models.NewUser()
-	log.Println(u.Id.Hex())
-	err = uds.InsertUser(u)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	tus := models.NewUserStorage()
+	tus.InsertUser(u)
 	token, err := auth.CreateToken(u)
 	if err != nil {
 		log.Fatal(err)
@@ -46,75 +49,112 @@ func handlersSetup(method, route string) (*http.Request, *httptest.ResponseRecor
 
 	req.Header.Set("Authorization", "Bearer "+token)
 
-	return req, rr, uds, tds, u
-}
-
-func udsTeardown(uds models.UserDataStore) {
-	defer uds.Close()
-
-	session, err := mgo.Dial(mdb.Hostname)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer session.Close()
-
-	err = session.DB(uds.GetDB()).C(uds.GetCollection()).DropCollection()
-	if err != nil {
-		log.Fatal("Error in dataStoreTeardown for uds: %s", err.Error())
-	}
-
-}
-
-func tdsTeardown(tds models.TodoDataStore) {
-	defer tds.Close()
-
-	session, err := mgo.Dial(mdb.Hostname)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = session.DB(tds.GetDB()).C(tds.GetCollection()).DropCollection()
-	if err != nil {
-		log.Fatal("Error in dataStoreTeardown for tds: %s", err.Error())
-	}
-
-}
-
-func TestTodosHandler0(t *testing.T) {
-	req, rr, uds, _, _ := handlersSetup("GET", "api/todos")
-	defer udsTeardown(uds)
-
 	var handler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 		TodosHandler(w, r)
 	}
+
 	ValidatePath(handler).ServeHTTP(rr, req)
 
 	testStatus(StatusSuccess, rr, t)
 
 	expected := "[]"
 	testBody(expected, rr, t)
-
 }
 
-/*func TestTodosHandler1(t *testing.T) {
-	req, rr, uds, tds, u := handlersSetup("GET", "api/todos")
-	defer udsTeardown(uds)
-	defer tdsTeardown(tds)
+func TestTodosHandler1(t *testing.T) {
+	req, rr := handlersSetup("GET", "api/todos", "")
 
+	u := models.NewUser()
+	tus := models.NewUserStorage()
+	tus.InsertUser(u)
+	token, err := auth.CreateToken(u)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	exampleTime := time.Now()
 	t0 := models.NewTodo()
 	t0.Ownerid = u.Id.Hex()
-	t1 := models.NewTodo()
-	t1.Ownerid = u.Id.Hex()
-
+	t0.Created = exampleTime
+	t0.Due = exampleTime
+	tds := models.NewTodoStorage()
 	tds.InsertTodo(t0)
-	tds.InsertTodo(t1)
 
 	var handler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 		TodosHandler(w, r)
 	}
+
 	ValidatePath(handler).ServeHTTP(rr, req)
 
 	testStatus(StatusSuccess, rr, t)
 
-	expected := "[]"
-	testBody(expected, rr, t)
-}*/
+	/*expected := fmt.Sprintf("[{\"id\":\"%s\","+
+		"\"title\":\"%s\","+
+		"\"note\":\"%s\""+
+		"\"created_date\":\"%v\""+
+		"\"due_date\":\"%v\""+
+		"\"completed\":%v}]", t0.Id.String(), t0.Title, t0.Note,
+		t0.Created.String(), t0.Due.String(), t0.Completed)
+	expected = strings.Replace(expected, " ", "", -1)*/
+
+	b, err := json.Marshal(t0)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	testBody(fmt.Sprintf("[%s]", string(b)), rr, t)
+
+	tds.DeleteTodo(t0.Id.Hex(), u.Id.Hex())
+	tus.DeleteUser(u.Id.Hex())
+}
+
+func TestTodosHandler2(t *testing.T) {
+	u := models.NewUser()
+	tus := models.NewUserStorage()
+	tus.InsertUser(u)
+	token, err := auth.CreateToken(u)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	exampleTime := time.Now()
+	t0 := models.NewTodo()
+	t0.Ownerid = u.Id.Hex()
+	t0.Created = exampleTime
+	t0.Due = exampleTime
+
+	b, err := json.Marshal(t0)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	body := string(b)
+	req, rr := handlersSetup("POST", "api/todos", body)
+
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	var handler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
+		TodosHandler(w, r)
+	}
+
+	ValidatePath(handler).ServeHTTP(rr, req)
+
+	testStatus(StatusCreation, rr, t)
+
+	res := jsonResponse{
+		Result: fmt.Sprintf("Successfully created 2Do: %s", t0.Id.String()),
+		Data:   t0,
+	}
+
+	msg, err := json.Marshal(res)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	testBody(string(msg), rr, t)
+
+	tds := models.NewTodoDataStore()
+	tds.DeleteTodo(t0.Id.Hex(), u.Id.Hex())
+	tus.DeleteUser(u.Id.Hex())
+}

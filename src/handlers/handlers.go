@@ -57,7 +57,7 @@ func TodosGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tds := models.NewTodoDataStore()
+	tds := models.NewTodoStorage()
 
 	ts, err := tds.GetTodosForUserId(claims.UserId)
 	if err != nil {

@@ -16,7 +16,7 @@ func (uds UserDataStore) setup() {
 
 }
 
-func udsTeardown(uds UserDataStore) {
+func udsTeardown(uds *UserDataStore) {
 	defer uds.Close()
 
 	session, err := mgo.Dial(mdb.Hostname)

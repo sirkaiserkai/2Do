@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"config"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
@@ -11,7 +12,7 @@ import (
 	"time"
 )
 
-var secret = "secret"
+var secret = config.GetConfig().Secret
 
 const ClaimsKey = 0
 
@@ -29,7 +30,7 @@ func CreateToken(u models.User) (string, error) {
 		//u.Username,
 		jwt.StandardClaims{
 			ExpiresAt: expireToken,
-			Issuer:    "localhost:9000",
+			Issuer:    config.GetConfig().JWTIssuer,
 		},
 	}
 

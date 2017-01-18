@@ -1,6 +1,7 @@
 package mdb
 
 import (
+	"config"
 	"errors"
 	"fmt"
 	"gopkg.in/mgo.v2"
@@ -8,7 +9,7 @@ import (
 	"log"
 )
 
-const Hostname = "mongodb://localhost"
+var Hostname = config.GetConfig().MongodbHostname
 
 var DatabaseName = "2DoDB"
 var masterSession *mgo.Session

@@ -1,0 +1,6 @@
+{
+	"secret": "Some secret",
+	"jwt_issuer": "Hostname",
+	"mongodb_hostname": "mongodb host"
+
+}

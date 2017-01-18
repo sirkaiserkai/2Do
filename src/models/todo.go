@@ -10,6 +10,7 @@ import (
 const TodoCollection = "todos"
 
 var TodoConvertError = errors.New("Failed to convert to Todo type")
+var TodoNotFoundError = mdb.NotFoundError
 
 type Todo struct {
 	Id bson.ObjectId `json:"id" bson:"_id,omitempty"` // MongoDBId
@@ -29,18 +30,47 @@ func NewTodo() Todo {
 	return t
 }
 
+// TodoStorage is an interface which details the requirments
+// to interface with retrieval and insertion of todos
+// into long term storage.
+type TodoStorage interface {
+	Close()
+	GetAllTodos() ([]Todo, error)
+	GetTodoById(id string) (*Todo, error)
+	GetTodosForUserId(id string) ([]Todo, error)
+	InsertTodo(t Todo) error
+	ModifyTodo(todoId, userId string, changes map[string]interface{}) error
+	DeleteTodo(id, userId string) error
+}
+
+// NewTodoStorage is the abstracted function that returns
+// a TodoStorage implementation depending on the value of
+// the TODO_STORE_TYPE.
+func NewTodoStorage() TodoStorage {
+	switch TODO_STORE_TYPE {
+	case Regular:
+		return NewTodoDataStore()
+	case Test:
+		return newTestTodoStorage()
+	}
+
+	return NewTodoDataStore()
+}
+
+// TodoDataStore is a wrapper struct for DataStore.
+// It implements the TodoStorage interface
 type TodoDataStore struct {
 	d mdb.DataStore
 }
 
-func NewTodoDataStore() TodoDataStore {
+func NewTodoDataStore() *TodoDataStore {
 	tds := TodoDataStore{}
 	tds.d = mdb.NewDataStore()
 	tds.d.Collection = TodoCollection
-	return tds
+	return &tds
 }
 
-func (tds TodoDataStore) Close() {
+func (tds *TodoDataStore) Close() {
 	tds.d.Close()
 }
 
@@ -48,7 +78,7 @@ func (tds *TodoDataStore) SetDB(db string) {
 	tds.d.Database = db
 }
 
-func (tds TodoDataStore) GetDB() string {
+func (tds *TodoDataStore) GetDB() string {
 	return tds.d.Database
 }
 
@@ -56,11 +86,11 @@ func (tds *TodoDataStore) SetCollection(coll string) {
 	tds.d.Collection = coll
 }
 
-func (tds TodoDataStore) GetCollection() string {
+func (tds *TodoDataStore) GetCollection() string {
 	return tds.d.Collection
 }
 
-func (tds TodoDataStore) GetAllTodos() ([]Todo, error) {
+func (tds *TodoDataStore) GetAllTodos() ([]Todo, error) {
 
 	ts := make([]Todo, 0)
 
@@ -81,7 +111,7 @@ func (tds TodoDataStore) GetAllTodos() ([]Todo, error) {
 	return ts, nil
 }
 
-func (tds TodoDataStore) GetTodoById(id string) (*Todo, error) {
+func (tds *TodoDataStore) GetTodoById(id string) (*Todo, error) {
 	t := Todo{}
 
 	raw, err := tds.d.GetObjectById(id)
@@ -97,7 +127,7 @@ func (tds TodoDataStore) GetTodoById(id string) (*Todo, error) {
 	return &t, nil
 }
 
-func (tds TodoDataStore) GetTodosForUserId(id string) ([]Todo, error) {
+func (tds *TodoDataStore) GetTodosForUserId(id string) ([]Todo, error) {
 	ts := make([]Todo, 0)
 	query := bson.M{"ownerid": id}
 
@@ -118,22 +148,23 @@ func (tds TodoDataStore) GetTodosForUserId(id string) ([]Todo, error) {
 	return ts, nil
 }
 
-func (tds TodoDataStore) InsertTodo(t Todo) error {
+func (tds *TodoDataStore) InsertTodo(t Todo) error {
 	return tds.d.InsertObject(t)
 }
 
-// TODO: Remove ability to change ownerid field
-func (tds TodoDataStore) ModifyTodo(todoId, userId string, changes map[string]interface{}) error {
+func (tds *TodoDataStore) ModifyTodo(todoId, userId string, changes map[string]interface{}) error {
 	params := make(map[string]string)
 	params["id"] = todoId
 	params["ownerid"] = userId
+	delete(changes, "ownerid") // Remove ability to change ownerid field
+	delete(changes, "_id")     // TODO: Verify this actual does something
+
 	return tds.d.ModifyObjectForId(params, changes)
 }
 
-func (tds TodoDataStore) DeleteTodo(id, userId string) error {
+func (tds *TodoDataStore) DeleteTodo(id, userId string) error {
 	m := make(map[string]string)
 	m["id"] = id
 	m["ownerid"] = userId
-
 	return tds.d.DeleteObjectForSelector(m)
 }
