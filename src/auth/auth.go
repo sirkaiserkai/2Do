@@ -106,7 +106,6 @@ func UnauthorizedReqHandler(w http.ResponseWriter, r *http.Request) {
 }*/
 
 func GetClaims(r *http.Request) (*Claims, error) {
-	log.Println(r.Context())
 	claims, ok := r.Context().Value(ClaimsKey).(Claims)
 	if !ok {
 		err := fmt.Errorf("Failed to retrieve Claims")
