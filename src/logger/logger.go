@@ -17,7 +17,7 @@ func Logger(inner func(http.ResponseWriter, *http.Request), routeName string) fu
 
 		inner(w, r)
 
-		log.Printf("%s\t%s\t%s\t%s\t%s",
+		log.Printf("%s\t%s\t%s\t%s\t",
 			r.Method,
 			r.RequestURI,
 			routeName,

@@ -26,6 +26,8 @@ const (
 	usrAccntRoute = "/account"
 )
 
+const addr = "localhost:8000"
+
 func main() {
 
 	r := mux.NewRouter()
@@ -47,10 +49,11 @@ func main() {
 
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         "localhost:8000",
+		Addr:         addr,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 
+	log.Printf("Hosting on %s", addr)
 	log.Fatal(srv.ListenAndServe())
 }
