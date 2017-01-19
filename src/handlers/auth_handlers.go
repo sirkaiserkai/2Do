@@ -101,7 +101,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if sameUsernameUser != nil {
-		log.Printf("SignUpHandler: User with user already exists for username: %s\n", err.Error())
+		log.Printf("SignUpHandler: User with user already exists for username: %s\n", sameUsernameUser.Username)
 		BadRequestHandler(w, r, "User already exists with username")
 		return
 	}
