@@ -156,10 +156,42 @@ func (tds *TodoDataStore) ModifyTodo(todoId, userId string, changes map[string]i
 	params := make(map[string]string)
 	params["id"] = todoId
 	params["ownerid"] = userId
-	delete(changes, "ownerid") // Remove ability to change ownerid field
-	delete(changes, "_id")     // TODO: Verify this actual does something
 
-	return tds.d.ModifyObjectForId(params, changes)
+	// This is required because we're using the $set operator to replace values
+	// of a specified field. It will create the field in the db lest we
+	// remove it explicitly from the changes map. (TODO: Find a better way of
+	// doing this)
+	// https://docs.mongodb.com/manual/reference/operator/update/set/
+	allowedKeys := []string{"title", "note", "due_date", "created_date"}
+	for k, v := range changes {
+		found := false
+
+		for _, modifiableVal := range allowedKeys {
+			if k == modifiableVal {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			delete(changes, k)
+		}
+
+		if _, ok := v.(string); !ok {
+			return errors.New("Incorrect format for key: " + k)
+		}
+	}
+
+	err := tds.d.ModifyObjectForId(params, changes)
+	if err != nil {
+		if err == mdb.NotFoundError {
+			return TodoNotFoundError
+		} else {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (tds *TodoDataStore) DeleteTodo(id, userId string) error {

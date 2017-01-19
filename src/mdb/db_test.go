@@ -12,7 +12,7 @@ import (
 const testDB = "2DoDB"
 
 var (
-	ts0         = TestStruct{Id: bson.NewObjectId(), Val0: "Word to your mother"}
+	ts0         = TestStruct{Id: bson.NewObjectId(), Val0: "Word to your mother", Val1: 1111}
 	ts1         = TestStruct{Id: bson.NewObjectId(), Val0: "Hello, world!", Val1: 1234}
 	ts2         = TestStruct{Id: bson.NewObjectId(), Val0: "Testing Forever", Val1: 9876}
 	testStructs = []TestStruct{ts0, ts1, ts2}
@@ -197,6 +197,10 @@ func TestModifyObjectForId(t *testing.T) {
 	err := d.ModifyObjectForId(m, change)
 	if err != nil {
 		t.Error(err)
+	}
+
+	if ts0.Val1 != 1111 {
+		t.Errorf("ts0.Val1 was modified when it should be unchanged: want %d got %d", 1111, ts0.Val1)
 	}
 
 	obj, err := d.GetObjectById(id)

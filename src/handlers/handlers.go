@@ -50,7 +50,6 @@ func TodoHandler(w http.ResponseWriter, r *http.Request) {
 // respective todos for a user.
 func TodosGetHandler(w http.ResponseWriter, r *http.Request) {
 	claims, err := auth.GetClaims(r)
-
 	if err != nil {
 		UnauthorizedHandler(w, r, "")
 		log.Println(err)
@@ -187,7 +186,11 @@ func TodoPutHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = tds.ModifyTodo(id, claims.UserId, m)
 	if err != nil {
-		NotFoundHandler(w, r, "2Do not found.")
+		if err == models.TodoNotFoundError {
+			NotFoundHandler(w, r, "2Do not found.")
+		} else {
+			BadRequestHandler(w, r, "Error modifiying 2Do. Please check the formatting of the parameters.")
+		}
 		return
 	}
 

@@ -35,7 +35,7 @@ func main() {
 
 	homeHandler := logger.Logger(handlers.ValidatePath(handlers.HomeHandler), homeRoute)
 	todosHandler := logger.Logger(handlers.ValidatePath(handlers.TodosHandler), todosRoute)
-	todoHandler := logger.Logger(handlers.ValidatePath(handlers.TodoGetHandler), todoRoute)
+	todoHandler := logger.Logger(handlers.ValidatePath(handlers.TodoHandler), todoRoute)
 
 	signUpHandler := logger.Logger(handlers.SignUpHandler, signUpRoute)
 	logInHandler := logger.Logger(handlers.LogInHandler, loginRoute)

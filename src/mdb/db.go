@@ -130,6 +130,7 @@ func (d *DataStore) ModifyObjectForId(params map[string]string, change map[strin
 		}
 	}
 
+	change = bson.M{"$set": change}
 	err := d.session.DB(d.Database).C(d.Collection).Update(selector, change)
 	if err != nil {
 		log.Println("ModifyObjectForId: " + err.Error())

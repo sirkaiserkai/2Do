@@ -23,7 +23,7 @@ type Claims struct {
 }
 
 func CreateToken(u models.User) (string, error) {
-	expireToken := time.Now().Add(time.Minute * 30).Unix()
+	expireToken := time.Now().Add(time.Hour * 48).Unix()
 
 	claims := Claims{
 		u.Id.Hex(),
