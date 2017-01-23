@@ -12,6 +12,7 @@ import (
 	"net/http"
 )
 
+// TODO: If info passed via form causes crash look into this!
 func LogInHandler(w http.ResponseWriter, r *http.Request) {
 	m := make(map[string]interface{})
 	err := json.NewDecoder(r.Body).Decode(&m)

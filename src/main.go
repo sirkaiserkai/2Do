@@ -1,11 +1,11 @@
 package main
 
 import (
+	h "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"handlers"
-	"logger"
-
 	"log"
+	"logger"
 	"net/http"
 	"time"
 )
@@ -48,12 +48,13 @@ func main() {
 	api.HandleFunc(loginRoute, logInHandler).Methods("POST")
 
 	srv := &http.Server{
-		Handler:      r,
+		Handler:      h.CORS()(r),
 		Addr:         addr,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 
 	log.Printf("Hosting on %s", addr)
+
 	log.Fatal(srv.ListenAndServe())
 }
