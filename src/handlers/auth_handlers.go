@@ -53,7 +53,7 @@ func LogInHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set(ContentType, ApplicationJSON)
 	w.Write([]byte(
 		"{\"result\": \"Successfully logged into 2Do\"," +
-			" \"token\": \"" + token + "\"}\""))
+			" \"token\": \"" + token + "\"}"))
 }
 
 func isPasswordLegit(password string) bool {
